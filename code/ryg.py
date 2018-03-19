@@ -1,25 +1,19 @@
 import requests
 from html.parser import HTMLParser
 
-#print("Hello, sailor");
-
-#Website = 'https://fgiesen.wordpress.com/2009/10/'
-Website = 'https://fgiesen.wordpress.com/2018/02/'
-HttpRequest = requests.get(Website);
-#print(HttpRequest.text)
-
-
+#####################################
 class month_html_parser(HTMLParser):
-    PrintData = False
+    #PrintData = False
     PrintCount = 10
     FoundMonthDiv = False
     InsideArticleList = False
     StopParsing = False
+    ArticleLinkList = []
 
     def handle_starttag(self, tag, attrs):
 
         if(tag == 'div' and ('class', 'entries') in attrs):
-            self.PrintData = True
+            #self.PrintData = True
             self.FoundMonthDiv = True
             self.StopParsing = False
             #print("Start tag : ", tag, " -- Attributes : ", attrs)
@@ -31,7 +25,7 @@ class month_html_parser(HTMLParser):
             self.InsideArticleList = True
         if(self.InsideArticleList and tag == 'a'):
             ArticleLink = attrs[0][1]
-            print(ArticleLink)
+            self.ArticleLinkList.insert(0, ArticleLink)
 
     def handle_endtag(self, tag):
         if(self.InsideArticleList and tag == 'li'):
@@ -43,7 +37,24 @@ class month_html_parser(HTMLParser):
         #if(self.PrintData == True and (self.PrintCount != 0)):
             #print("Data : ", data)
             #self.PrintCount -= 1
+###################################################################
 
-MonthHtmlParser = month_html_parser()
+def ParseArticle(ArticleLink):
+    print(ArticleLink);
 
-MonthHtmlParser.feed(HttpRequest.text)
+def ParseMonth(Year, Month):
+    Website = 'https://fgiesen.wordpress.com/' + str(Year) + '/' + str(Month).zfill(2) + '/'
+    HttpRequest = requests.get(Website);
+    MonthHtmlParser = month_html_parser()
+    MonthHtmlParser.feed(HttpRequest.text)
+    # TODO(hugo): For a reason that I do not understand,
+    # the object MonthHtmlParser is not destroyed
+    # at the end of this scope (and the list keeps accumulating)
+    for ArticleLink in MonthHtmlParser.ArticleLinkList :
+        ParseArticle(ArticleLink)
+    print("End of ", Year, " ", Month)
+
+ParseMonth(2018, 2)
+ParseMonth(2012, 6)
+
+
